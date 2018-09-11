@@ -63,6 +63,7 @@ data FilterStreamState e =
   FilterStreamState { fssCurrentBlock  :: Quantity
                     , fssInitialFilter :: Filter e
                     , fssWindowSize    :: Integer
+                    , fssLag           :: Integer
                     }
 
 
@@ -73,14 +74,14 @@ mkBlockNumber bm = case bm of
   Earliest           -> return 0
   _                  -> Eth.blockNumber
 
-
 pollTillBlockProgress
   :: Quantity
+  -> Integer
   -> Web3 Quantity
-pollTillBlockProgress currentBlock = do
+pollTillBlockProgress currentBlock lag = do
   bn <- Eth.blockNumber
-  if currentBlock >= bn
+  if currentBlock + fromIntegral lag >= bn
     then do
       liftIO $ threadDelay 3000000
-      pollTillBlockProgress currentBlock
-       else pure bn
+      pollTillBlockProgress currentBlock lag
+    else pure bn
