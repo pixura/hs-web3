@@ -67,6 +67,7 @@ library
                      , Network.Ethereum.Contract.Event.SingleFilter
                      , Network.Ethereum.Contract.Event.Common
                      , Network.Ethereum.Contract.Method
+                     , Network.JsonRpc.Exceptions
                      , Network.JsonRpc.TinyClient
                      , Data.String.Extra
   build-depends:       base                 >4.9       && <4.12
