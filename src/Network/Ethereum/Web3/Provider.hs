@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 
 -- |
@@ -19,22 +20,25 @@
 module Network.Ethereum.Web3.Provider where
 
 import           Control.Concurrent.Async      (Async, async)
-import           Control.Exception             (Exception, try)
+import           Control.Exception             (Exception, try, catch)
 import           Control.Monad.Catch           (MonadThrow)
 import           Control.Monad.IO.Class        (MonadIO (..))
 import           Control.Monad.Reader          (MonadReader (..))
 import           Control.Monad.Trans.Reader    (ReaderT, mapReaderT, runReaderT)
+import           Control.Monad.Catch           (throwM)
 import           Data.ByteString               (ByteString)
 import           Data.Default                  (Default (..))
 import           GHC.Generics                  (Generic)
 import           Network.Ethereum.Web3.Logging
 import           Network.HTTP.Client           (Manager, newManager)
+import           Network.JsonRpc.Exceptions    (JsonRpcException(..))
 
 #ifdef TLS_MANAGER
 import           Network.HTTP.Client.TLS       (tlsManagerSettings)
 #else
 import           Network.HTTP.Client           (defaultManagerSettings)
 #endif
+
 
 -- | Any communication with Ethereum node wrapped with 'Web3' monad
 newtype Web3 a = Web3 { unWeb3 :: ReaderT (Provider, Manager, Web3Logger) IO a }
@@ -80,7 +84,13 @@ runWeb3With manager provider = runWeb3With' manager provider noopLogger
 
 runWeb3With' :: MonadIO m => Manager -> Provider -> Web3Logger -> Web3 a -> m (Either Web3Error a)
 runWeb3With' manager provider w3logger =
-    liftIO . try .  flip runReaderT (provider, manager, w3logger) . unWeb3
+    liftIO . try . unifyErrs . flip runReaderT (provider, manager, w3logger) . unWeb3
+    where
+        unifyErrs :: IO a -> IO a
+        unifyErrs action = action
+            `catch` \case
+                ParsingException s -> throwM $ ParserFail s
+                CallException err -> throwM . JsonRpcFail $ show err
 
 -- | 'Web3' monad runner
 runWeb3' :: MonadIO m => Provider -> Web3 a -> m (Either Web3Error a)

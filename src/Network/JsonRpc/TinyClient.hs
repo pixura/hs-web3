@@ -31,14 +31,13 @@ module Network.JsonRpc.TinyClient (
   ) where
 
 import           Control.Applicative            ((<|>))
-import           Control.Exception              (Exception)
 import           Control.Monad                  ((<=<))
 import           Control.Monad.Catch            (MonadThrow, throwM)
 import           Control.Monad.IO.Class         (MonadIO, liftIO)
 import           Control.Monad.Reader           (MonadReader, ask)
 import           Data.Aeson
 import           Data.ByteString.Lazy           (ByteString)
-import           Data.Text                      (Text, unpack)
+import           Data.Text                      (Text)
 import           Network.Ethereum.Web3.Logging
 import           Network.Ethereum.Web3.Provider
 import           Network.HTTP.Client            (Manager,
@@ -47,6 +46,7 @@ import           Network.HTTP.Client            (Manager,
                                                  requestBody, requestHeaders,
                                                  responseBody)
 import           System.Random                  (randomIO)
+import           Network.JsonRpc.Exceptions
 
 instance FromJSON a => Remote Web3 (Web3 a)
 
@@ -78,23 +78,7 @@ instance FromJSON Response where
             \v -> Response <$>
                 (Right <$> v .: "result" <|> Left <$> v .: "error")
 
--- | JSON-RPC error message
-data RpcError = RpcError
-  { errCode    :: !Int
-  , errMessage :: !Text
-  , errData    :: !(Maybe Value)
-  } deriving Eq
 
-instance Show RpcError where
-    show (RpcError code msg dat) =
-        "JSON-RPC error " ++ show code ++ ": " ++ unpack msg
-         ++ ". Data: " ++ show dat
-
-instance FromJSON RpcError where
-    parseJSON = withObject "JSON-RPC error object" $
-        \v -> RpcError <$> v .: "code"
-                       <*> v .: "message"
-                       <*> v .:? "data"
 
 -- | Typeclass for JSON-RPC monad base.
 --
@@ -161,13 +145,6 @@ call m r = do
         resp <- responseBody <$> liftIO (httpLbs request' manager)
         liftIO . unWeb3Logger logger $ W3LMJsonRPCRawResponse rid resp
         return resp
-
-data JsonRpcException
-    = ParsingException String
-    | CallException RpcError
-    deriving (Eq, Show)
-
-instance Exception JsonRpcException
 
 decodeResponse :: (MonadThrow m, FromJSON a)
                => ByteString
