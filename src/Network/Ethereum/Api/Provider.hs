@@ -29,7 +29,7 @@ import           Lens.Micro.Mtl             ((.=))
 import           Network.HTTP.Client        (Manager)
 
 import           Network.JsonRpc.TinyClient (JsonRpc, JsonRpcClient,
-                                             defaultSettings, jsonRpcManager)
+                                             defaultSettings, jsonRpcManager, mkJsonRpcClient)
 
 -- | Any communication with Ethereum node wrapped with 'Web3' monad
 newtype Web3 a = Web3 { unWeb3 :: StateT JsonRpcClient IO a }
@@ -63,8 +63,9 @@ runWeb3With :: MonadIO m
             -> Provider
             -> Web3 a
             -> m (Either Web3Error a)
-runWeb3With manager provider f =
-    runWeb3' provider $ jsonRpcManager .= manager >> f
+runWeb3With manager (HttpProvider uri) f =
+    let cfg = mkJsonRpcClient manager uri
+    in liftIO . try . flip evalStateT cfg . unWeb3 $ f
 
 -- | 'Web3' monad runner
 runWeb3' :: MonadIO m

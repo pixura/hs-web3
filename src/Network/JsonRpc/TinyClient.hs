@@ -54,6 +54,7 @@ module Network.JsonRpc.TinyClient
 
     -- * JSON-RPC client settings
     , JsonRpcClient
+    , mkJsonRpcClient
     , defaultSettings
     , jsonRpcServer
     , jsonRpcManager
@@ -101,6 +102,12 @@ defaultSettings :: MonadIO m
 defaultSettings srv = liftIO $ JsonRpcClient
   <$> newManager tlsManagerSettings
   <*> pure srv
+
+-- | Create 'JsonRpcClient' with a supplied Manager and server URI.
+mkJsonRpcClient :: Manager          -- ^ HTTP connection manager.
+                -> String           -- ^ JSON-RPC server URI
+                -> JsonRpcClient
+mkJsonRpcClient = JsonRpcClient
 
 instance Show JsonRpcClient where
     show JsonRpcClient{..} = "JsonRpcClient<" ++ _jsonRpcServer ++ ">"
