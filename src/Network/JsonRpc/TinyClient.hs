@@ -89,8 +89,8 @@ type JsonRpcM m = (MonadIO m, MonadThrow m, MonadState JsonRpcClient m)
 
 -- | JSON-RPC client state vars.
 data JsonRpcClient = JsonRpcClient
-    { _jsonRpcManager :: Manager    -- ^ HTTP connection manager.
-    , _jsonRpcServer  :: String     -- ^ Remote server URI.
+    { _jsonRpcManager :: !Manager    -- ^ HTTP connection manager.
+    , _jsonRpcServer  :: !String     -- ^ Remote server URI.
     }
 
 $(makeLenses ''JsonRpcClient)
