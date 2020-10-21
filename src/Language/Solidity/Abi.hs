@@ -20,6 +20,7 @@ module Language.Solidity.Abi
     , Declaration(..)
     , FunctionArg(..)
     , EventArg(..)
+    , FunctionStateMutability(..)
 
     -- * Method/Event id encoder
     , signature
@@ -40,7 +41,7 @@ import           Data.Aeson         (FromJSON (parseJSON), Options (constructorT
 import           Data.Aeson.TH      (deriveJSON)
 import           Data.Monoid        ((<>))
 import           Data.Text          (Text)
-import qualified Data.Text          as T (dropEnd, pack, take, unlines, unpack)
+import qualified Data.Text          as T (dropEnd, pack, take, unlines, unpack, toLower)
 import           Data.Text.Encoding (encodeUtf8)
 import           Text.Parsec        (ParseError, char, choice, digit, eof,
                                      lookAhead, many1, manyTill, optionMaybe,
@@ -63,6 +64,14 @@ $(deriveJSON
     (defaultOptions {fieldLabelModifier = toLowerFirst . drop 6})
     ''FunctionArg)
 
+-- | Function State Mutability
+data FunctionStateMutability = View | Pure | NonPayable | Payable
+  deriving (Show, Eq, Ord)
+
+$(deriveJSON
+    (defaultOptions {constructorTagModifier = T.unpack . T.toLower . T.pack})
+    ''FunctionStateMutability)
+
 -- | Event argument
 data EventArg = EventArg
   { eveArgName    :: Text
@@ -82,9 +91,11 @@ data Declaration
   = DConstructor { conInputs :: [FunctionArg] }
   -- ^ Contract constructor
   | DFunction { funName     :: Text
-              , funConstant :: Bool
+              , funConstant :: Maybe Bool
               , funInputs   :: [FunctionArg]
-              , funOutputs  :: Maybe [FunctionArg] }
+              , funOutputs  :: Maybe [FunctionArg] 
+              , funStateMutability :: Maybe FunctionStateMutability
+              }
   -- ^ Method
   | DEvent { eveName      :: Text
            , eveInputs    :: [EventArg]
@@ -96,14 +107,14 @@ data Declaration
 
 instance Eq Declaration where
     (DConstructor a) == (DConstructor b) = length a == length b
-    (DFunction a _ _ _) == (DFunction b _ _ _) = a == b
+    (DFunction a _ _ _ _) == (DFunction b _ _ _ _) = a == b
     (DEvent a _ _) == (DEvent b _ _) = a == b
     (DFallback _) == (DFallback _) = True
     (==) _ _ = False
 
 instance Ord Declaration where
     compare (DConstructor a) (DConstructor b) = compare (length a) (length b)
-    compare (DFunction a _ _ _) (DFunction b _ _ _) = compare a b
+    compare (DFunction a _ _ _ _) (DFunction b _ _ _ _) = compare a b
     compare (DEvent a _ _) (DEvent b _ _) = compare a b
     compare (DFallback _) (DFallback _) = EQ
 
@@ -177,7 +188,7 @@ signature (DConstructor inputs) = "(" <> args inputs <> ")"
 
 signature (DFallback _) = "()"
 
-signature (DFunction name _ inputs _) = name <> "(" <> args inputs <> ")"
+signature (DFunction name _ inputs _ _) = name <> "(" <> args inputs <> ")"
   where
     args :: [FunctionArg] -> Text
     args [] = ""
