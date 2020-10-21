@@ -69,7 +69,7 @@ import           Data.Solidity.Event              (IndexedEvent (..))
 import           Data.Solidity.Prim               (Address, Bytes, BytesN, IntN,
                                                    ListN, UIntN)
 import           Data.String.Extra                (toLowerFirst, toUpperFirst)
-import           Language.Solidity.Abi            (ContractAbi (..),
+import           Language.Solidity.Abi            (FunctionStateMutability(..), ContractAbi (..),
                                                    Declaration (..),
                                                    EventArg (..),
                                                    FunctionArg (..),
@@ -81,6 +81,7 @@ import           Network.Ethereum.Api.Types       (DefaultBlock (..),
 import qualified Network.Ethereum.Contract        as Contract (Contract (..))
 import           Network.Ethereum.Contract.Method (Method (..))
 import           Network.JsonRpc.TinyClient       (JsonRpc)
+import Data.Aeson (Result(..), fromJSON)
 
 -- | Read contract Abi from file
 abiFrom :: QuasiQuoter
@@ -147,7 +148,7 @@ funBangType :: FunctionArg -> BangTypeQ
 funBangType fa =
     bangType (bang sourceNoUnpack sourceStrict) (typeFuncQ fa)
 
-funWrapper :: Bool
+funWrapper :: Maybe Bool
            -- ^ Is constant?
            -> Name
            -- ^ Function name
@@ -157,8 +158,10 @@ funWrapper :: Bool
            -- ^ Parameters
            -> Maybe [FunctionArg]
            -- ^ Results
+           -> Maybe FunctionStateMutability
+           -- ^ Results
            -> DecsQ
-funWrapper c name dname args result = do
+funWrapper c name dname args result sm = do
     vars <- replicateM (length args) (newName "t")
     a <- varT <$> newName "a"
     t <- varT <$> newName "t"
@@ -176,15 +179,23 @@ funWrapper c name dname args result = do
     sequence [
         sigD name $ [t|
             (JsonRpc $m, Account $a $t, Functor ($t $m)) =>
-                $(arrowing $ inputT ++ [if c then outputT else [t|$t $m TxReceipt|]])
+                $(arrowing $ inputT ++ [if doesMutate then [t|$t $m TxReceipt|] else outputT])
             |]
-      , if c
-            then funD' name (varP <$> vars) $ case result of
+      , if doesMutate
+            then 
+              funD' name (varP <$> vars) $ [|send $(params)|]
+            else 
+              funD' name (varP <$> vars) $ case result of
                     Just [_] -> [|only <$> call $(params)|]
                     _        -> [|call $(params)|]
-            else funD' name (varP <$> vars) $ [|send $(params)|]
       ]
   where
+    doesMutate = case (c, sm) of
+      (Nothing, Nothing) -> error "No \"constant\" or \"stateMutability\" found"
+      (Just True,_) -> False
+      (_,Just Pure) -> False
+      (_,Just View) -> False
+      _ -> True
     arrowing []       = error "Impossible branch call"
     arrowing [x]      = x
     arrowing (x : xs) = [t|$x -> $(arrowing xs)|]
@@ -226,8 +237,8 @@ mkDecl ev@(DEvent uncheckedName inputs anonymous) = sequence
 
 -- TODO change this type name also
 -- | Method delcarations maker
-mkDecl fun@(DFunction name constant inputs outputs) = (++)
-  <$> funWrapper constant fnName dataName inputs outputs
+mkDecl fun@(DFunction name constant inputs outputs stateMutability) = (++)
+  <$> funWrapper constant fnName dataName inputs outputs stateMutability
   <*> sequence
         [ dataD' dataName (normalC dataName bangInput) derivingD
         , instanceD' dataName (conT ''Generic) []
@@ -291,12 +302,12 @@ escapeEqualNames = concatMap go . group . sort
   where go []       = []
         go (x : xs) = x : zipWith appendToName xs hats
         hats = [T.replicate n "'" | n <- [1..]]
-        appendToName d@(DFunction n _ _ _) a = d { funName = n <> a }
+        appendToName d@(DFunction n _ _ _ _) a = d { funName = n <> a }
         appendToName d@(DEvent n _ _) a      = d { eveName = n <> a }
         appendToName d _                     = d
 
 escapeReservedNames :: Declaration -> Declaration
-escapeReservedNames d@(DFunction n _ _ _)
+escapeReservedNames d@(DFunction n _ _ _ _)
   | isKeyword n = d { funName = n <> "'" }
   | otherwise = d
 escapeReservedNames d = d
@@ -331,9 +342,11 @@ constructorSpec str = do
 -- | Abi to declarations converter
 quoteAbiDec :: String -> DecsQ
 quoteAbiDec str =
-    case str ^? _JSON <|> str ^? key "abi" . _JSON <|> str ^? key "compilerOutput" . key "abi" . _JSON of
-        Nothing                 -> fail "Unable to decode contract ABI"
-        Just (ContractAbi decs) -> do
+    case str ^? key "compilerOutput" . key "abi" <|> str ^? key "abi"  <|> str ^? _JSON of
+        Nothing                 -> fail "quoteAbiDec::Unable to parse JSON of contract ABI"
+        Just v -> case fromJSON v of
+          Error msg -> fail $ "quoteAbiDec::Unable to decode ABI with error: " <> msg
+          Success (ContractAbi decs) -> do
             funEvDecs <- concat <$> mapM mkDecl (escape decs)
             case constructorSpec str of
                 Nothing -> return funEvDecs
@@ -342,6 +355,8 @@ quoteAbiDec str =
 -- | Abi information string
 quoteAbiExp :: String -> ExpQ
 quoteAbiExp str =
-    case str ^? _JSON <|> str ^? key "abi" . _JSON of
-        Nothing                -> fail "Unable to decode contract ABI"
-        Just a@(ContractAbi _) -> stringE (show a)
+    case str ^? key "abi" <|> str ^? _JSON of
+        Nothing                 -> fail "quoteAbiExp::Unable to parse JSON of contract ABI"
+        Just v -> case fromJSON v of
+          Error msg -> fail $ "quoteAbiExp::Unable to decode ABI with error: " <> msg
+          Success a@(ContractAbi _) -> stringE (show a)

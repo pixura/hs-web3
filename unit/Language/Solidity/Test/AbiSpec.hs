@@ -35,7 +35,7 @@ spec = do
       mId `shouldBe` expected
 
 buildFillOrderDec :: Declaration
-buildFillOrderDec = DFunction "fillOrder" False funInputs' funOutputs'
+buildFillOrderDec = DFunction "fillOrder" (Just False) funInputs' funOutputs' Nothing
   where
     funInputs' = 
       [ makeTupleFuncArg ("order", "tuple") tupleComponents
