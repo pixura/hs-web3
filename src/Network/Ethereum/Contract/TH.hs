@@ -46,6 +46,7 @@ module Network.Ethereum.Contract.TH
 import           Control.Applicative              ((<|>))
 import           Control.Monad                    (replicateM, (<=<))
 import qualified Data.Aeson                       as Aeson (encode)
+import Data.Aeson (ToJSON)
 import           Data.ByteArray                   (convert)
 import qualified Data.Char                        as Char
 import           Data.Default                     (Default (..))
@@ -63,6 +64,7 @@ import           Language.Haskell.TH
 import           Language.Haskell.TH.Quote
 import           Lens.Micro                       ((^?))
 import           Lens.Micro.Aeson                 (key, _JSON, _String)
+
 
 import           Data.Solidity.Abi                (AbiGet, AbiPut, AbiType (..))
 import           Data.Solidity.Event              (IndexedEvent (..))
@@ -213,6 +215,7 @@ mkDecl ev@(DEvent uncheckedName inputs anonymous) = sequence
     , instanceD' nonIndexedName (conT ''AbiGet) []
     , dataD' allName (recC allName (map (\(n, a) -> (\(b,t) -> return (n,b,t)) <=< toBang <=< typeEventQ $ a) allArgs)) derivingD
     , instanceD' allName (conT ''Generic) []
+    , instanceD' allName (conT ''ToJSON) []
     , instanceD (cxt [])
         (pure $ ConT ''IndexedEvent `AppT` ConT indexedName `AppT` ConT nonIndexedName `AppT` ConT allName)
         [funD' 'isAnonymous [] [|const anonymous|]]

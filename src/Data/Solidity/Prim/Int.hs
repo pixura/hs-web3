@@ -38,6 +38,7 @@ import           Data.Bits                 (Bits (testBit), (.&.))
 import           Data.Proxy                (Proxy (..))
 import           Data.Serialize            (Get, Putter, Serialize (get, put))
 import           GHC.Generics              (Generic)
+import Data.Aeson (ToJSON(..))
 import           GHC.TypeLits
 
 import           Data.Solidity.Abi         (AbiGet (..), AbiPut (..),
@@ -69,6 +70,9 @@ instance (KnownNat n, n <= 256) => Num (UIntN n) where
 
 instance (KnownNat n, n <= 256) => Show (UIntN n) where
     show = show . unUIntN
+
+instance (KnownNat n, n <= 256) => ToJSON (UIntN n) where
+    toJSON = toJSON . show
 
 instance (KnownNat n, n <= 256) => Bounded (UIntN n) where
     minBound = UIntN 0
