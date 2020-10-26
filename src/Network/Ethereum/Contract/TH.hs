@@ -45,8 +45,8 @@ module Network.Ethereum.Contract.TH
 
 import           Control.Applicative              ((<|>))
 import           Control.Monad                    (replicateM, (<=<))
-import qualified Data.Aeson                       as Aeson (encode)
-import Data.Aeson (ToJSON)
+import qualified Data.Aeson                       as Aeson
+import Data.Aeson (ToJSON(..))
 import           Data.ByteArray                   (convert)
 import qualified Data.Char                        as Char
 import           Data.Default                     (Default (..))
@@ -215,7 +215,7 @@ mkDecl ev@(DEvent uncheckedName inputs anonymous) = sequence
     , instanceD' nonIndexedName (conT ''AbiGet) []
     , dataD' allName (recC allName (map (\(n, a) -> (\(b,t) -> return (n,b,t)) <=< toBang <=< typeEventQ $ a) allArgs)) derivingD
     , instanceD' allName (conT ''Generic) []
-    , instanceD' allName (conT ''ToJSON) []
+    , instanceD' allName (conT ''ToJSON) toJSON'
     , instanceD (cxt [])
         (pure $ ConT ''IndexedEvent `AppT` ConT indexedName `AppT` ConT nonIndexedName `AppT` ConT allName)
         [funD' 'isAnonymous [] [|const anonymous|]]
@@ -237,6 +237,14 @@ mkDecl ev@(DEvent uncheckedName inputs anonymous) = sequence
     allArgs = makeArgs name $ map (\i -> (eveArgName i, i)) inputs
     allName = mkName $ toUpperFirst (T.unpack name)
     derivingD = [''Show, ''Eq, ''Ord, ''GHC.Generic]
+    toJSONArgName = mkName "x"
+    mkSetJSONProp (n, evArg) =  [| $(litE . stringL . T.unpack $ eveArgName evArg) Aeson..= $(varE n) $(varE (toJSONArgName)) |]
+    toJSON' = [funD' 'toJSON [varP toJSONArgName] [| Aeson.object $( listE $ buildToJSONObjectList allArgs) |] ]
+    buildToJSONObjectList [] = []
+    buildToJSONObjectList xs = map mkSetJSONProp xs
+
+      
+
 
 -- TODO change this type name also
 -- | Method delcarations maker
