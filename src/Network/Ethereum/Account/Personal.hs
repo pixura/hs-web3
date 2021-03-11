@@ -23,7 +23,6 @@ import           Control.Monad.State.Strict        (get, runStateT)
 import           Control.Monad.Trans               (lift)
 import qualified Data.ByteArray                    as BA (convert)
 import           Data.Default                      (Default (..))
-import           Data.Monoid                       ((<>))
 import           Data.Proxy                        (Proxy (..))
 
 import           Data.Solidity.Abi.Codec           (decode, encode)
@@ -38,6 +37,8 @@ import           Network.Ethereum.Api.Personal     (Passphrase)
 import qualified Network.Ethereum.Api.Personal     as Personal (sendTransaction)
 import           Network.Ethereum.Api.Types        (Call (callData, callFrom, callGas))
 import           Network.Ethereum.Contract.Method  (selector)
+import Control.Monad.Catch
+import Control.Exception
 
 -- | Unlockable node managed account params
 data Personal = Personal {
@@ -80,4 +81,4 @@ instance Account Personal PersonalAccount where
                 res <- lift $ Eth.call params block
                 case decode res of
                     Right r -> return r
-                    Left e  -> fail e
+                    Left e -> lift (throwM $ TypeError e)

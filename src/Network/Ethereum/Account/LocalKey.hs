@@ -44,6 +44,8 @@ import           Network.Ethereum.Api.Types        (Call (..))
 import           Network.Ethereum.Chain            (foundation)
 import           Network.Ethereum.Contract.Method  (selector)
 import           Network.Ethereum.Transaction      (encodeTransaction)
+import Control.Monad.Catch
+import Control.Exception
 
 -- | Local EOA params
 data LocalKey = LocalKey
@@ -92,4 +94,4 @@ instance Account LocalKey LocalKeyAccount where
         res <- lift $ Eth.call params _block
         case decode res of
             Right r -> return r
-            Left e  -> fail e
+            Left e -> lift (throwM $ TypeError e)
