@@ -1,5 +1,5 @@
 # Resolver to choose a 'specific' stackage snapshot or a compiler version.
-resolver: lts-17.5
+resolver: lts-17.8
 
 # User packages to be built.
 packages:
@@ -19,6 +19,5 @@ nix:
     - boost
     - jsoncpp
     - solc
-    - solc.dev
     - haskellPackages.hlint
     - haskellPackages.stylish-haskell
