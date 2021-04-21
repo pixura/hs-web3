@@ -101,6 +101,9 @@ newtype IntN (n :: Nat) = IntN { unIntN :: Word256 }
 instance (KnownNat n, n <= 256) => Show (IntN n) where
     show = show . toInteger
 
+instance (KnownNat n, n <= 256) => ToJSON (IntN n) where
+    toJSON = toJSON . show
+
 instance (KnownNat n, n <= 256) => Bounded (IntN n) where
     minBound = IntN $ negate $ 2 ^ (natVal (Proxy :: Proxy (n :: Nat)) - 1)
     maxBound = IntN $ 2 ^ (natVal (Proxy :: Proxy (n :: Nat)) - 1) - 1
