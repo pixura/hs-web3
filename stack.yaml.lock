@@ -5,15 +5,15 @@
 
 packages:
 - completed:
-    hackage: relapse-1.0.0.0@sha256:b89ea23189e07f377be4e2a4deccf3d6ba7f547ed8ad77e27b35d78801efd81c,1574
     pantry-tree:
-      size: 494
       sha256: a9ceb48aeb57519990a73a33032b97e7b4ce4d329e181ca36bc55425debf4748
+      size: 494
+    hackage: relapse-1.0.0.0@sha256:b89ea23189e07f377be4e2a4deccf3d6ba7f547ed8ad77e27b35d78801efd81c,1574
   original:
     hackage: relapse-1.0.0.0@sha256:b89ea23189e07f377be4e2a4deccf3d6ba7f547ed8ad77e27b35d78801efd81c
 snapshots:
 - completed:
-    size: 565720
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/8.yaml
-    sha256: 76bf8992ff8dfe6eda9c02f81866138c2369344d5011ab39ae403457c4448b03
-  original: lts-17.8
+    sha256: 1b74fb5e970497b5aefae56703f1bd44aa648bd1a5ef95c1eb8c29775087e2bf
+    size: 587393
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/25.yaml
+  original: lts-18.25
