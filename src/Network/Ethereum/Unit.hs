@@ -1,8 +1,7 @@
-{-# LANGUAGE DeriveGeneric        #-}
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE OverloadedStrings    #-}
-{-# LANGUAGE ScopedTypeVariables  #-}
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- |
 -- Module      :  Network.Ethereum.Unit
@@ -47,18 +46,21 @@
 -- @
 --
 
-module Network.Ethereum.Unit (
-    Unit(..)
-  , UnitSpec(..)
-  , Wei
-  , Babbage
-  , Lovelace
-  , Shannon
-  , Szabo
-  , Finney
-  , Ether
-  , KEther
-  ) where
+module Network.Ethereum.Unit
+    (
+    -- * The @Unit@ type class
+      Unit(..)
+
+    -- * Ethereum value metrics
+    , Wei
+    , Babbage
+    , Lovelace
+    , Shannon
+    , Szabo
+    , Finney
+    , Ether
+    , KEther
+    ) where
 
 import           Data.Proxy                      (Proxy (..))
 import           Data.Text.Lazy                  (Text, unpack)
@@ -71,13 +73,10 @@ import qualified Text.Read.Lex                   as L
 -- | Ethereum value unit
 class (Read a, Show a, UnitSpec a, Fractional a) => Unit a where
     -- | Make a value from integer wei
-    fromWei :: Integer -> a
+    fromWei :: Integral b => b -> a
+
     -- | Convert a value to integer wei
-    toWei :: a -> Integer
-    -- | Conversion beween two values
-    convert :: Unit b => a -> b
-    {-# INLINE convert #-}
-    convert = fromWei . toWei
+    toWei :: Integral b => a -> b
 
 -- | Unit specification
 class UnitSpec a where
@@ -92,8 +91,8 @@ mkValue :: forall a b . (UnitSpec a, RealFrac b) => b -> Value a
 mkValue = MkValue . round . (* divider (Proxy :: Proxy a))
 
 instance UnitSpec a => Unit (Value a) where
-    fromWei = MkValue
-    toWei   = unValue
+    fromWei = MkValue . toInteger
+    toWei   = fromInteger . unValue
 
 instance UnitSpec a => UnitSpec (Value a) where
     divider = const $ divider (Proxy :: Proxy a)

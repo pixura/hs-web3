@@ -1,6 +1,63 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.8.3.2] 2019-05-13
+### Changed
+- Fixed dependencies bounds for stackage distribution
+- Optimized LANGUAGE pragmas
+
+## [0.8.3.1] 2019-01-21
+### Changed
+- Fixed dependencies bounds for stackage distribution
+
+## [0.8.3.0] 2019-01-09
+### Added
+- Web3 secret storage v3 support
+
+### Changed 
+- Cryptonite based ECC signer for messages and transactions, it removes secp256k1 dependency
+- Fixed dependencies bounds for stackage LTS-13
+
+## [0.8.2.1] 2018-11-19
+### Changed
+- Fixed dependencies bounds for stackage distribution
+
+## [0.8.2.0] 2018-11-07
+### Changed
+- Gas estimation runs when gas limit is not set before
+
+## [0.8.1.0] 2018-10-29
+### Added
+- Support vinyl-0.10 in `MultiFilter` module
+
+## [0.8.0.0] 2018-10-26
+### Added
+- Support for Ethereum cryptography
+- Local private key transaction signer 
+- Generalized JSON-RPC monad for API methods
+- Support for multiple transaction sending methods via one `Account` api
+- Monad based transaction sending parametrization 
+- Experimental support for solidity compiler (disabled by default) 
+- Support for Ethereum mainnet ENS resolver
+- Contract typeclass with api/bytecode getters
+- Gas estimation for sending transactions
+- Contract typeclass TH generator
+- Function for creating contracts
+- Event single/multi filters
+- HexString data type
+- Personal api calls
+- Address checksum
+
+### Changed
+- package.yaml instead web3.cabal package descriptor
+- Solidity related data types and codecs moved to Data.Solidity
+- Solidity related parsers and compiler moved to Language.Solidity
+- Modules in Network.Ethereum.Web3 moved to Network.Ethereum.Api
+- fromWei/toWei from `Unit` typeclass now operates over `Integral`
+
+### Removed
+- `convert` function from `Unit` typeclass
+
 ## [0.7.3.0] 2018-05-22
 ### Added
 - 'Network.Ethereum.ABI.Prim' meta-module as primitive types and instances aggregator.

@@ -5,20 +5,15 @@
 
 module Network.Ethereum.Web3.Test.EventSpec where
 
-import           Data.Tagged                       (Tagged)
-import           Generics.SOP                      (Generic)
-import qualified GHC.Generics                      as GHC (Generic)
-import           Test.Hspec                        (Spec, describe, it,
-                                                    shouldBe)
+import           Data.Tagged                (Tagged)
+import           Generics.SOP               (Generic)
+import qualified GHC.Generics               as GHC (Generic)
+import           Test.Hspec                 (Spec, describe, it, shouldBe)
 
-import           Network.Ethereum.ABI.Class        (ABIGet)
-import           Network.Ethereum.ABI.Event        (IndexedEvent (..),
-                                                    decodeEvent)
-import           Network.Ethereum.ABI.Prim.Address (Address)
-import           Network.Ethereum.ABI.Prim.Bytes   ()
-import           Network.Ethereum.ABI.Prim.Int     (UIntN)
-import           Network.Ethereum.ABI.Prim.Tagged  ()
-import           Network.Ethereum.Web3.Types       (Change (..))
+import           Data.Solidity.Abi          (AbiGet, AbiType (..))
+import           Data.Solidity.Event        (IndexedEvent (..), decodeEvent)
+import           Data.Solidity.Prim         (Address, UIntN)
+import           Network.Ethereum.Api.Types (Change (..))
 
 
 spec :: Spec
@@ -60,11 +55,18 @@ eventTest =
 data NewCount = NewCount (UIntN 256) deriving (Eq, Show, GHC.Generic)
 instance Generic NewCount
 
+
 data NewCountIndexed = NewCountIndexed  deriving (Eq, Show, GHC.Generic)
 instance Generic NewCountIndexed
+instance AbiType NewCountIndexed where
+    isDynamic = const False
+instance AbiGet NewCountIndexed
 
 data NewCountNonIndexed = NewCountNonIndexed (Tagged 1 (UIntN 256)) deriving (Eq, Show, GHC.Generic)
 instance Generic NewCountNonIndexed
+instance AbiType NewCountNonIndexed where
+    isDynamic = const False
+instance AbiGet NewCountNonIndexed
 
 instance IndexedEvent NewCountIndexed NewCountNonIndexed NewCount where
   isAnonymous = const False
@@ -75,9 +77,15 @@ instance Generic Transfer
 
 data TransferIndexed = TransferIndexed (Tagged 1 Address) (Tagged 3 Address) deriving (Eq, Show, GHC.Generic)
 instance Generic TransferIndexed
+instance AbiType TransferIndexed where
+    isDynamic = const False
+instance AbiGet TransferIndexed
 
 data TransferNonIndexed = TransferNonIndexed (Tagged 2 (UIntN 256)) deriving (Eq, Show, GHC.Generic)
 instance Generic TransferNonIndexed
+instance AbiType TransferNonIndexed where
+    isDynamic = const False
+instance AbiGet TransferNonIndexed
 
 instance IndexedEvent TransferIndexed TransferNonIndexed Transfer where
   isAnonymous = const False

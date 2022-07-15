@@ -1,0 +1,140 @@
+name:                web3
+version:             0.8.3.2
+synopsis:            Ethereum API for Haskell
+description:         Web3 is a Haskell client library for Ethereum
+github:              "airalab/hs-web3"
+license:             BSD3
+license-file:        LICENSE
+author:              Alexander Krupenkin
+maintainer:          mail@akru.me
+copyright:           "(c) Alexander Krupenkin 2016"
+category:            Network
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+- stack.yaml
+- examples/token/ERC20.hs
+- examples/token/ERC20.json
+- examples/token/Main.hs
+- test/contracts/Registry.json
+- test/contracts/SimpleStorage.json
+- test/contracts/ComplexStorage.json
+- test/contracts/Linearization.json
+
+dependencies:
+- base                 
+- template-haskell     
+- http-client-tls      
+- microlens-aeson      
+- microlens-mtl        
+- microlens-th         
+- microlens            
+- data-default         
+- generics-sop         
+- transformers         
+- http-client          
+- uuid-types           
+- bytestring           
+- cryptonite           
+- exceptions           
+- basement             
+- machines             
+- OneTuple             
+- relapse              
+- tagged               
+- parsec               
+- memory               
+- cereal               
+- aeson                
+- vinyl                
+- async                
+- text                 
+- mtl                  
+
+ghc-options:
+- -funbox-strict-fields
+- -Wduplicate-exports
+- -Whi-shadowing
+- -Widentities
+- -Woverlapping-patterns
+- -Wpartial-type-signatures
+- -Wunrecognised-pragmas
+- -Wtyped-holes
+- -Wincomplete-patterns
+- -Wincomplete-uni-patterns
+- -Wmissing-fields
+- -Wmissing-methods
+- -Wmissing-exported-signatures
+- -Wmissing-monadfail-instances
+- -Wmissing-signatures
+- -Wname-shadowing
+- -Wunused-binds
+- -Wunused-top-binds
+- -Wunused-local-binds
+- -Wunused-pattern-binds
+- -Wunused-imports
+- -Wunused-matches
+- -Wunused-foralls
+- -Wtabs
+
+flags:
+  debug:
+    description: Enable debug compiler options
+    default: False
+    manual: True
+
+  compiler:
+    description: Enable Solidity compiler
+    default: False
+    manual: True
+
+when:
+- condition: flag(debug)
+  ghc-options:      -ddump-splices
+
+- condition: flag(compiler)
+  source-dirs:      compiler
+  cpp-options:      -DSOLIDITY_COMPILER
+  dependencies:     containers
+  extra-libraries:  solidity
+  c-sources:        ./compiler/cbits/solidity_lite.cpp
+  include-dirs:     ./compiler/cbits
+
+library:
+  source-dirs: src
+
+tests:
+  unit:
+    main:             Spec.hs
+    source-dirs:
+    - unit
+    - src
+    dependencies:
+    - hspec-expectations   
+    - hspec-discover       
+    - hspec-contrib        
+    - hspec                
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+
+  live:
+    main:             Spec.hs
+    source-dirs:
+    - test
+    - src
+    dependencies:
+    - hspec-expectations   
+    - hspec-discover       
+    - hspec-contrib        
+    - hspec                
+    - split                
+    - random               
+    - time                 
+    - stm                  
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N

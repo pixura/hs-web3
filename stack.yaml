@@ -1,24 +1,23 @@
 # Resolver to choose a 'specific' stackage snapshot or a compiler version.
-resolver: lts-11.7
+resolver: lts-17.8
+
 # User packages to be built.
 packages:
 - '.'
-# Dependency packages to be pulled from upstream that are not in the resolver
-# (e.g., acme-missiles-0.3)
+
+# Extra package dependencies
 extra-deps:
-    - relapse-1.0.0.0
-    - secp256k1-0.5.2
-    - type-list-0.5.0.0
+- relapse-1.0.0.0@sha256:b89ea23189e07f377be4e2a4deccf3d6ba7f547ed8ad77e27b35d78801efd81c
 
-
-allow-newer: true
-
-# Override default flag values for local packages and extra-deps
-flags: {}
-# Extra package databases containing global packages
-extra-package-dbs: []
 # Dependencies bounds
 pvp-bounds: both
+
 # Nix integration
 nix:
-    packages: [ zlib ]
+    packages:
+    - zlib
+    - boost
+    - jsoncpp
+    - solc
+    - haskellPackages.hlint
+    - haskellPackages.stylish-haskell
