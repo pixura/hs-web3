@@ -4,7 +4,7 @@
 , http-client-tls, lib, machines, memory, microlens
 , microlens-aeson, microlens-mtl, microlens-th, mtl, OneTuple
 , parsec, random, split, stm, tagged, template-haskell
-, text, time, transformers, uuid-types, vinyl
+, text, time, transformers, uuid-types
 }:
 mkDerivation {
   pname = "web3";
@@ -15,7 +15,7 @@ mkDerivation {
     exceptions generics-sop http-client http-client-tls machines memory
     microlens microlens-aeson microlens-mtl microlens-th mtl OneTuple
     parsec tagged template-haskell text transformers uuid-types
-    vinyl
+
   ];
   libraryToolDepends = [ hpack ];
   testHaskellDepends = [
@@ -24,7 +24,7 @@ mkDerivation {
     hspec-expectations http-client http-client-tls machines memory
     microlens microlens-aeson microlens-mtl microlens-th mtl OneTuple
     parsec random split stm tagged template-haskell text time
-    transformers uuid-types vinyl
+    transformers uuid-types
   ];
   testToolDepends = [ hspec-discover ];
   prePatch = "hpack";

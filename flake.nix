@@ -13,14 +13,14 @@
     in
     {
       overlay = (final: prev: {
-        haskell-hello = final.haskell.packages.ghc8107.callPackage (import ./default.nix) {} ;
+        haskell-hello = final.haskell.packages.ghc923.callPackage (import ./default.nix) {} ;
       });
       packages = forAllSystems (system: {
          haskell-hello = nixpkgsFor.${system}.haskell-hello;
       });
       defaultPackage = forAllSystems (system: self.packages.${system}.haskell-hello);
       checks = self.packages;
-      devShell = forAllSystems (system: let haskellPackages = nixpkgsFor.${system}.haskell.packages.ghc8107;
+      devShell = forAllSystems (system: let haskellPackages = nixpkgsFor.${system}.haskell.packages.ghc923;
         in haskellPackages.shellFor {
           packages = p: [self.packages.${system}.haskell-hello];
           buildInputs = with haskellPackages;
